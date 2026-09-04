@@ -15,3 +15,7 @@ uvicorn main:app --reload# currency-converter-api
 docker build -t currency-api .
 docker run -d -p 8000:8000 --name currency-container currency-api
 Then open http://127.0.0.1:8000/docs
+## Run with Docker Compose (API + PostgreSQL)
+docker compose up -d --build 
+Then open http://127.0.0.1:8000/docs 
+
