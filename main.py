@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, Field
 from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from fastapi.staticfiles import StaticFiles 
 from database import engine, async_session_maker, Base
 from models import ConversionHistory
 
@@ -11,6 +11,7 @@ app = FastAPI(
     description="A simple API to convert amounts between predefined currencies and store history.",
     version="1.1.0"
 )
+
 
 class Currency(str, Enum):
     USD = "USD"
@@ -72,3 +73,4 @@ async def convert_currency(
         "converted_amount": round(converted_amount, 2),
         "rate": round(rate, 4)
     }
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

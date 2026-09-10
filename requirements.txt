@@ -1,4 +1,5 @@
 fastapi
 uvicorn[standard]
-sqlchemy 
+sqlalchemy
 psycopg[binary]
+pydantic
