@@ -1,0 +1,7 @@
+# CVE-2026-23949: vendored jaraco.context inside setuptools.
+# Not exploitable at runtime because we don't use setuptools in production.
+CVE-2026-23949
+
+# CVE-2026-24049: vendored wheel inside setuptools.
+# Build-time tool only, not used at runtime.
+CVE-2026-24049
