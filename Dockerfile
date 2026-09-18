@@ -1,7 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 WORKDIR /app
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel jaraco.context msgpack
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel msgpack
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip uninstall -y setuptools wheel

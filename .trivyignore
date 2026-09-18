@@ -1,7 +1,7 @@
-# CVE-2026-23949: vendored jaraco.context inside setuptools.
-# Not exploitable at runtime because we don't use setuptools in production.
-CVE-2026-23949
+# CVE-2025-47273: setuptools vendored inside pip (build-time tool).
+# Not exploitable at runtime; we don't use setuptools PackageIndex.
+CVE-2025-47273
 
-# CVE-2026-24049: vendored wheel inside setuptools.
-# Build-time tool only, not used at runtime.
-CVE-2026-24049
+# GHSA-6v7p-g79w-8964: msgpack vendored inside another package.
+# Our direct dependency (msgpack 1.2.2) is patched. This is a transitive vendored copy.
+GHSA-6v7p-g79w-8964
