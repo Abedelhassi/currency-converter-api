@@ -8,9 +8,9 @@ env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: currency_api
   AWS_ACCOUNT_ID: 433213574897
+  SECRET_NAME: currency-api/db-credentials
 
 jobs:
-  # المرحلة الأولى: البناء والفحص والرفع إلى ECR
   build-and-push:
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +47,6 @@ jobs:
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
 
-  # المرحلة الثانية: النشر على EC2
   deploy-to-ec2:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -59,29 +58,40 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # تسجيل الدخول إلى ECR من داخل خادم EC2
+            # 1. تثبيت jq إذا لم يكن مثبتاً (لقراءة ملف JSON)
+            sudo yum install -y jq
+
+            # 2. جلب السر من AWS Secrets Manager
+            SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.SECRET_NAME }} --query SecretString --output text)
+
+            # 3. استخراج القيم من JSON
+            DB_USER=$(echo $SECRET_JSON | jq -r .username)
+            DB_PASS=$(echo $SECRET_JSON | jq -r .password)
+            DB_NAME=$(echo $SECRET_JSON | jq -r .dbname)
+
+            # 4. تسجيل الدخول إلى ECR
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-            # سحب أحدث نسخة من الصورة
+            # 5. سحب أحدث صورة
             docker pull ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
 
-            # إنشاء شبكة Docker إذا لم تكن موجودة
+            # 6. إنشاء شبكة Docker
             docker network create currency-net || true
 
-            # تشغيل قاعدة البيانات (PostgreSQL)
+            # 7. تشغيل قاعدة البيانات باستخدام القيم من Secrets Manager
             docker stop db || true
             docker rm db || true
             docker run -d --name db --network currency-net \
-              -e POSTGRES_USER=admin \
-              -e POSTGRES_PASSWORD=secret \
-              -e POSTGRES_DB=currency_db \
+              -e POSTGRES_USER=$DB_USER \
+              -e POSTGRES_PASSWORD=$DB_PASS \
+              -e POSTGRES_DB=$DB_NAME \
               -v pgdata:/var/lib/postgresql/data \
               postgres:15
 
-            # تشغيل التطبيق (API)
+            # 8. تشغيل التطبيق
             docker stop api || true
             docker rm api || true
             docker run -d --name api --network currency-net \
               -p 80:8000 \
-              -e DATABASE_URL=postgresql+psycopg://admin:secret@db:5432/currency_db \
+              -e DATABASE_URL=postgresql+psycopg://$DB_USER:$DB_PASS@db:5432/$DB_NAME \
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
