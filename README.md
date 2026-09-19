@@ -155,23 +155,3 @@ curl -X POST http://13.60.79.6/convert \
 ## 📄 License
 
 This project is open-source and available for educational purposes.
-```
-
----
-
-### 📌 Next Steps:
-
-1. **Replace `README.md`** with the content above.
-2. **Add the `/health` endpoint** to `main.py` (from the previous message).
-3. **Push the changes:**
-
-```bash
-git add README.md main.py
-git commit -m "Add professional README and health check endpoint"
-git push
-```
-
-4. **Wait for CI/CD** to finish, then verify:
-   - `http://13.60.79.6/health` → should return `{"status": "healthy"}`
-   - `http://13.60.79.6/docs` → Swagger UI
-   - GitHub repo → README renders with the green badge.
